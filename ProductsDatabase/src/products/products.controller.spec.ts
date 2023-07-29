@@ -8,7 +8,8 @@ import { CreateProductDto, UpdateProductDto } from './productDto';
 describe('ProductsController', () => {
   let controller: ProductsController;
   const serviceMock = {
-    findAll: jest.fn(),
+    count: jest.fn(),
+    getMany: jest.fn(),
     findOne: jest.fn(),
     findByName: jest.fn(),
     create: jest.fn(),
@@ -53,13 +54,120 @@ describe('ProductsController', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('findAll', () => {
-    it('should return an array of products', async () => {
-      const products: Product[] = getCorrectProducts();
+  describe('count', () => {
+    it('should return the number of products', async () => {
+      const expectedCount: number = 10;
 
-      jest.spyOn(serviceMock, 'findAll').mockResolvedValue(products);
+      jest.spyOn(serviceMock, 'count').mockResolvedValue(expectedCount);
 
-      expect(await controller.findAll()).toEqual(products);
+      expect(await controller.count()).toEqual(expectedCount);
+    });
+  });
+
+  describe('getMany', () => {
+    it('should return an array of products without skip and take', async () => {
+      const expectedProducts: Product[] = getCorrectProducts();
+
+      jest.spyOn(serviceMock, 'getMany').mockResolvedValue(expectedProducts);
+
+      expect(await controller.getMany(undefined, undefined)).toEqual(
+        expectedProducts,
+      );
+    });
+
+    it('should return an array of products with skip and take', async () => {
+      const expectedProducts: Product[] = getCorrectProducts();
+      const skip = 1;
+      const take = 2;
+
+      jest.spyOn(serviceMock, 'getMany').mockResolvedValue(expectedProducts);
+
+      expect(await controller.getMany(skip, take)).toEqual(expectedProducts);
+    });
+
+    it('should throw BadRequestException if query parameters are invalid', async () => {
+      const skip: any = 'abc';
+      const take: any = 'xyz';
+
+      await expect(controller.getMany(skip, take)).rejects.toThrowError(
+        BadRequestException,
+      );
+    });
+
+    it('should return an array of products with skip and without take', async () => {
+      // Arrange
+      const expectedProducts: Product[] = getCorrectProducts();
+      const params = {
+        skip: 1,
+      };
+
+      // Act
+      jest.spyOn(serviceMock, 'getMany').mockResolvedValue(expectedProducts);
+      const result = await controller.getMany(params.skip, undefined);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(serviceMock.getMany).toHaveBeenCalledWith(params);
+    });
+
+    it('should return an array of products without skip and with take', async () => {
+      // Arrange
+      const expectedProducts: Product[] = getCorrectProducts();
+      const params = {
+        take: 2,
+      };
+
+      // Act
+      jest.spyOn(serviceMock, 'getMany').mockResolvedValue(expectedProducts);
+      const result = await controller.getMany(undefined, params.take);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(serviceMock.getMany).toHaveBeenCalledWith(params);
+    });
+
+    it('should return no products if skip is greater than the number of products', async () => {
+      // Arrange
+      const expectedProducts: Product[] = [];
+      const params = {
+        skip: 10,
+      };
+
+      // Act
+      jest.spyOn(serviceMock, 'getMany').mockResolvedValue(expectedProducts);
+      const result = await controller.getMany(params.skip, undefined);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(serviceMock.getMany).toHaveBeenCalledWith(params);
+    });
+
+    it('should throw BadRequestException if take is 0', async () => {
+      // Arrange
+      const params = {
+        take: 0,
+      };
+
+      // Act
+      await expect(
+        controller.getMany(undefined, params.take),
+      ).rejects.toThrowError(BadRequestException);
+    });
+
+    it('should return all products if take is more than the number of products', async () => {
+      // Arrange
+      const expectedProducts: Product[] = getCorrectProducts();
+      const params = {
+        take: 10,
+      };
+
+      // Act
+      jest.spyOn(serviceMock, 'getMany').mockResolvedValue(expectedProducts);
+      const result = await controller.getMany(undefined, params.take);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(serviceMock.getMany).toHaveBeenCalledWith(params);
     });
   });
 

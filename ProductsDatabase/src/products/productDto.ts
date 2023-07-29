@@ -64,3 +64,20 @@ export const UpdateProductValidator = z.object({
     .optional(),
 });
 export type UpdateProductDto = z.infer<typeof UpdateProductValidator>;
+
+export const GetProductsValidator = z.object({
+  skip: z
+    .number({
+      invalid_type_error: 'Skip must be a number',
+    })
+    .min(0, { message: 'Must be 0 or more' })
+    .optional(),
+  take: z
+    .number({
+      invalid_type_error: 'Take must be a number',
+    })
+    .min(1, { message: 'Must be 1 or more' })
+    .max(100, { message: 'Must be 100 or fewer' })
+    .optional(),
+});
+export type GetProductsDto = z.infer<typeof GetProductsValidator>;

@@ -16,3 +16,4 @@ Instalation steps:
 10. install: `npm i -D zod zod-validation-error`
 11. install: `npm i -D @golevelup/ts-jest`
 12. install: `npm i -D jest-mock-extended`
+13. install: `npm install --save @nestjs/swagger`

@@ -59,10 +59,52 @@ describe('ProductsService', () => {
         data: createDto,
       });
     });
+
+    it('should create a new product without description and imageName', async () => {
+      // Arrange
+      const createDto: CreateProductDto = {
+        name: 'Product Name',
+        price: 100,
+      };
+      const expectedProduct: Product = {
+        id: 1,
+        name: createDto.name,
+        description: null,
+        price: createDto.price,
+        imageName: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Act
+      jest.spyOn(prisma.product, 'create').mockResolvedValue(expectedProduct);
+      const result = await service.create(createDto);
+
+      // Assert
+      expect(result).toEqual(expectedProduct);
+      expect(prisma.product.create).toHaveBeenCalledWith({
+        data: createDto,
+      });
+    });
   });
 
-  describe('findAll', () => {
-    it('should return an array of products', async () => {
+  describe('count', () => {
+    it('should return the number of products', async () => {
+      // Arrange
+      const expectedCount: number = 10;
+
+      // Act
+      jest.spyOn(prisma.product, 'count').mockResolvedValue(expectedCount);
+      const result = await service.count();
+
+      // Assert
+      expect(result).toEqual(expectedCount);
+      expect(prisma.product.count).toHaveBeenCalled();
+    });
+  });
+
+  describe('getMany', () => {
+    it('should return an array of products without skip and take', async () => {
       // Arrange
       const expectedProducts: Product[] = [
         {
@@ -89,11 +131,216 @@ describe('ProductsService', () => {
       jest
         .spyOn(prisma.product, 'findMany')
         .mockResolvedValue(expectedProducts);
-      const result = await service.findAll();
+      const result = await service.getMany({});
 
       // Assert
       expect(result).toEqual(expectedProducts);
-      expect(prisma.product.findMany).toHaveBeenCalled();
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        take: undefined,
+      });
+    });
+
+    it('should return an array of products with skip and take', async () => {
+      // Arrange
+      const expectedProducts: Product[] = [
+        {
+          id: 2,
+          name: 'Product 2',
+          description: 'Description 2',
+          price: 200,
+          imageName: 'image2.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 3,
+          name: 'Product 3',
+          description: 'Description 3',
+          price: 300,
+          imageName: 'image3.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      const params = {
+        skip: 1,
+        take: 2,
+      };
+
+      // Act
+      jest
+        .spyOn(prisma.product, 'findMany')
+        .mockResolvedValue(expectedProducts);
+      const result = await service.getMany(params);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        skip: params.skip,
+        take: params.take,
+      });
+    });
+
+    it('should return an array of products with skip and without take', async () => {
+      // Arrange
+      const expectedProducts: Product[] = [
+        {
+          id: 2,
+          name: 'Product 2',
+          description: 'Description 2',
+          price: 200,
+          imageName: 'image2.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 3,
+          name: 'Product 3',
+          description: 'Description 3',
+          price: 300,
+          imageName: 'image3.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      const params = {
+        skip: 1,
+      };
+
+      // Act
+      jest
+        .spyOn(prisma.product, 'findMany')
+        .mockResolvedValue(expectedProducts);
+      const result = await service.getMany(params);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        skip: params.skip,
+        take: undefined,
+      });
+    });
+
+    it('should return an array of products without skip and with take', async () => {
+      // Arrange
+      const expectedProducts: Product[] = [
+        {
+          id: 1,
+          name: 'Product 1',
+          description: 'Description 1',
+          price: 100,
+          imageName: 'image1.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 2,
+          name: 'Product 2',
+          description: 'Description 2',
+          price: 200,
+          imageName: 'image2.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      const params = {
+        take: 2,
+      };
+
+      // Act
+      jest
+        .spyOn(prisma.product, 'findMany')
+        .mockResolvedValue(expectedProducts);
+      const result = await service.getMany(params);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        skip: undefined,
+        take: params.take,
+      });
+    });
+
+    it('should return no products if skip is greater than the number of products', async () => {
+      // Arrange
+      const expectedProducts: Product[] = [];
+      const params = {
+        skip: 10,
+      };
+
+      // Act
+      jest
+        .spyOn(prisma.product, 'findMany')
+        .mockResolvedValue(expectedProducts);
+      const result = await service.getMany(params);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        skip: params.skip,
+        take: undefined,
+      });
+    });
+
+    it('should return no products if take is 0', async () => {
+      // Arrange
+      const expectedProducts: Product[] = [];
+      const params = {
+        take: 0,
+      };
+
+      // Act
+      jest
+        .spyOn(prisma.product, 'findMany')
+        .mockResolvedValue(expectedProducts);
+      const result = await service.getMany(params);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        skip: undefined,
+        take: params.take,
+      });
+    });
+
+    it('should return all products if take is more than the number of products', async () => {
+      // Arrange
+      const expectedProducts: Product[] = [
+        {
+          id: 1,
+          name: 'Product 1',
+          description: 'Description 1',
+          price: 100,
+          imageName: 'image1.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 2,
+          name: 'Product 2',
+          description: 'Description 2',
+          price: 200,
+          imageName: 'image2.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      const params = {
+        take: 10,
+      };
+
+      // Act
+      jest
+        .spyOn(prisma.product, 'findMany')
+        .mockResolvedValue(expectedProducts);
+      const result = await service.getMany(params);
+
+      // Assert
+      expect(result).toEqual(expectedProducts);
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        skip: undefined,
+        take: params.take,
+      });
     });
   });
 
@@ -209,6 +456,28 @@ describe('ProductsService', () => {
 
       // Assert
       expect(result).toEqual(expectedProduct);
+      expect(prisma.product.update).toHaveBeenCalledWith({
+        where: { id: productId },
+        data: updateDto,
+      });
+    });
+
+    it('should return null if the product with the specified ID does not exist', async () => {
+      // Arrange
+      const productId = 999;
+      const updateDto: UpdateProductDto = {
+        name: 'Updated Product Name',
+        description: 'Updated Product Description',
+        price: 150,
+        imageName: 'updated_product.jpg',
+      };
+
+      // Act
+      jest.spyOn(prisma.product, 'update').mockResolvedValue(null!);
+      const result = await service.update(productId, updateDto);
+
+      // Assert
+      expect(result).toBeNull();
       expect(prisma.product.update).toHaveBeenCalledWith({
         where: { id: productId },
         data: updateDto,

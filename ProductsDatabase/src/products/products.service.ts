@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Product } from '@prisma/client';
-import { CreateProductDto, UpdateProductDto } from './productDto';
+import {
+  CreateProductDto,
+  GetProductsDto,
+  UpdateProductDto,
+} from './productDto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -11,8 +15,22 @@ export class ProductsService {
     return await this.prisma.product.create({ data });
   }
 
-  async findAll(): Promise<Product[]> {
-    return await this.prisma.product.findMany();
+  async count(): Promise<number> {
+    return await this.prisma.product.count();
+  }
+
+  async getMany(getProductsDto: GetProductsDto): Promise<Product[]> {
+    const { skip, take } = getProductsDto;
+    if (!skip || isNaN(skip)) {
+      return this.prisma.product.findMany({
+        take,
+      });
+    } else {
+      return this.prisma.product.findMany({
+        skip,
+        take,
+      });
+    }
   }
 
   async findOne(id: number): Promise<Product | null> {

@@ -8,11 +8,15 @@ import {
   Delete,
   NotFoundException,
   BadRequestException,
+  Query,
+  ParseIntPipe,
+  Header,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import {
   CreateProductDto,
   CreateProductValidator,
+  GetProductsValidator,
   UpdateProductDto,
   UpdateProductValidator,
 } from './productDto';
@@ -23,9 +27,28 @@ import { fromZodError } from 'zod-validation-error';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @Get('count')
+  @Header('Content-Type', 'application/json')
+  async count(): Promise<number> {
+    const count = await this.productsService.count();
+    return count;
+  }
+
   @Get()
-  async findAll(): Promise<Product[]> {
-    return await this.productsService.findAll();
+  async getMany(
+    @Query('skip', ParseIntPipe) skip?: number,
+    @Query('take', ParseIntPipe) take?: number,
+  ): Promise<Product[]> {
+    const parsedDto = GetProductsValidator.safeParse({
+      skip,
+      take,
+    });
+    if (!parsedDto.success)
+      throw new BadRequestException(fromZodError(parsedDto.error).message);
+
+    const products = await this.productsService.getMany(parsedDto.data);
+
+    return products;
   }
 
   @Get(':id')
